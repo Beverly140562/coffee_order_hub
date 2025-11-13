@@ -1,34 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { Toaster } from "react-hot-toast";
+import ProductSection from "./pages/ProductSection";
+import AboutSection from "./pages/AboutSection";
+import Footer from "./pages/Footer";
+import AdminPage from "./pages/AdminPage";
+import Registration from "./pages/Registration";
+import LandingPage from "./pages/LandingPage";
+import AdminProduct from "./pages/AdminProduct";
+import AdminManage from "./pages/AdminManage";
+import LoadingPage from "./pages/LoadingPage";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <Toaster position="top-center" />
+
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+
+        {/*  login/registration */}
+        <Route path="/landing" element={<LoadingPage />} />
+        <Route path="/signup" element={<Registration />} />
+        <Route path="/login" element={<Registration />} />
+
+
+        {/* User site */}
+        <Route path="/menu" element={<ProductSection />} />
+
+
+        {/* Admin section */}
+        <Route path="/portal" element={<AdminPage />} />
+        <Route path="/add-product" element={<AdminProduct />} />
+        <Route path="/orders" element={<AdminManage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
