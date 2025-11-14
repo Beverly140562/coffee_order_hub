@@ -9,6 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import AdminProduct from "./pages/AdminProduct";
 import AdminManage from "./pages/AdminManage";
 import LoadingPage from "./pages/LoadingPage";
+<<<<<<< HEAD
 import FavoritesPage from "./pages/FavoritesPage";
 import ProfilePage from "./pages/ProfilePage";
 import CartModal from "./pages/CartModal";
@@ -21,6 +22,11 @@ import CheckOut from "./pages/CheckOut";
 function App() {
   return (
     <FavoritesProvider>
+=======
+
+function App() {
+  return (
+>>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
     <BrowserRouter>
       <Toaster position="top-center" />
 
@@ -35,6 +41,7 @@ function App() {
 
         {/* User site */}
         <Route path="/menu" element={<ProductSection />} />
+<<<<<<< HEAD
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/cart" element={<CartModal />} />
@@ -42,13 +49,20 @@ function App() {
         <Route path="/checkout" element={<ProductOrder />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/checkoutpayment" element={<CheckOut />} />
+=======
+
+>>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
 
         {/* Admin section */}
         <Route path="/portal" element={<AdminPage />} />
         <Route path="/add-product" element={<AdminProduct />} />
         <Route path="/orders" element={<AdminManage />} />
       </Routes>
+<<<<<<< HEAD
     </BrowserRouter></FavoritesProvider>
+=======
+    </BrowserRouter>
+>>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
   );
 }
 
