@@ -25,9 +25,9 @@ export default function Register() {
 
     if (isLogin) {
       if (formData.role.toLowerCase() === "admin") {
-        navigate("/portal"); // Admin dashboard
+        navigate("/portal");
       } else {
-        navigate("/menu"); // User landing page
+        navigate("/menu");
       }
       alert(`✅ Logged in as ${formData.email}`);
     } else {
@@ -48,138 +48,124 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#C7AD7F] flex p-4 ">
-      <div className="w-full max-w-md">
-            <div className="flex items-center justify-between mb-10">
-          <NavLink
-            to="/landing"
-            className="text-black transition pb-15"
-          >
+    <div className="min-h-screen bg-[#C7AD7F] flex justify-center items-start p-4 sm:p-8">
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-10">
+          <NavLink to="/landing" className="text-black">
             <ArrowLeft size={40} />
           </NavLink>
-          <h1 className="text-6xl font-semibold text-black text-center flex-1 pt-20">
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-black text-center flex-1 pt-10 sm:pt-14 md:pt-20">
             Coffee Hub
           </h1>
-          <div className="w-7" />
+
+          <div className="w-8" />
         </div>
 
-        {/* Form Header */}
-        <h2 className="text-3xl font-semibold text-black mb-8 mt-20">
+        <h2 className="text-3xl sm:text-3xl md:text-4xl font-semibold text-black mb-12 mt-25 sm:mt-16 md:mt-20">
           {isLogin ? "Sign In" : "Sign Up"}
         </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {!isLogin && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
-                        <input
-                          type="text"
-                          name="first_name"
-                          value={formData.first_name}
-                          onChange={handleInputChange}
-                          placeholder="First Name"
-                          className="w-full pl-11 pr-4 py-3 border outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
-                        <input
-                          type="text"
-                          name="last_name"
-                          value={formData.last_name}
-                          onChange={handleInputChange}
-                          placeholder="Last Name"
-                          className="w-full pl-11 pr-4 py-3 border outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
 
-                  <div>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
-                      <input
-                        type="text"
-                        name="role"
-                        value={formData.role}
-                        onChange={handleInputChange}
-                        placeholder="Role: admin or user"
-                        className="w-full pl-11 pr-4 py-3 border outline-none"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div>
+          {!isLogin && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
                   <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
-                    placeholder="Enter your email"
+                    placeholder="First Name"
+                    className="w-full pl-11 pr-4 py-3 border outline-none"
+                  />
+                </div>
+
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    placeholder="Last Name"
                     className="w-full pl-11 pr-4 py-3 border outline-none"
                   />
                 </div>
               </div>
 
-              <div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder={
-                      isLogin ? "Enter your password" : "Create a password"
-                    }
-                    className="w-full pl-11 pr-12 py-3 border outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black hover:text-black"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-                <button type="button" className="pt-1 pb-20 text-center text-lg text-black">
-                  {isLogin ? "Forgot the password?" : ""}
-                </button>
-              </div> 
-              
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
+                <input
+                  type="text"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  placeholder="Role: admin or user"
+                  className="w-full pl-11 pr-4 py-3 border outline-none"
+                />
+              </div>
+            </>
+          )}
 
-              <button
-                type="submit"
-                className="w-full text-black border py-3 text-xl font-semibold transition hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                {isLogin ? "Sign in" : "Sign Up"}
-              </button>
-            </form>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Enter your email"
+              className="w-full pl-11 pr-4 py-3 border outline-none"
+            />
+          </div>
 
-            <div className="mt-15 text-center text-sm text-black">
-              {isLogin
-                ? "Don't have an account?"
-                : "Already have an account?"}{" "}
-              <button
-                onClick={toggleForm}
-                className="text-black font-semibold hover:text-amber-700 hover:underline"
-              >
-                {isLogin ? "Sign Up" : "Login"}
-              </button>
-            </div>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder={isLogin ? "Enter your password" : "Create a password"}
+              className="w-full pl-11 pr-12 py-3 border outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+
+          {isLogin && (
+            <button className="text-black text-sm mb-30 hover:underline">
+              Forgot the password?
+            </button>
+          )}
+
+          <button
+            type="submit"
+            className="w-full text-black border py-3 text-xl font-semibold transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            {isLogin ? "Sign in" : "Sign Up"}
+          </button>
+        </form>
+
+        <div className="mt-12 text-center text-sm text-black">
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button
+            onClick={toggleForm}
+            className="font-semibold hover:text-amber-700 hover:underline"
+          >
+            {isLogin ? "Sign Up" : "Login"}
+          </button>
+        </div>
       </div>
     </div>
   );

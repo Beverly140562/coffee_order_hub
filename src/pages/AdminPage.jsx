@@ -6,7 +6,6 @@ import AdminManage from './AdminManage';
 function AdminPage() {
   const navigate = useNavigate();
 
-
   const handleLogout = () => {
     navigate('/');
   };
@@ -14,7 +13,7 @@ function AdminPage() {
   return (
     <div className="w-full min-h-screen bg-[#C7AD7F] p-1 items-center">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow-md w-full w-full flex justify-between items-center">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-between items-center">
         <h2 className="text-2xl font-bold text-amber-900">☕ Admin Dashboard</h2>
         <button
           onClick={handleLogout}
@@ -25,7 +24,7 @@ function AdminPage() {
       </div>
 
       {/* Product Form + List */}
-      <AdminProduct showForm={false} showTable={true}  />
+      <AdminProduct showForm={false} showTable={true} />
 
       <AdminManage />
     </div>
