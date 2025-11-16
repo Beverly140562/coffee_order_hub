@@ -30,7 +30,7 @@ function ProfilePage() {
   <NavLink  className="w-full flex items-center gap-6 px-4 py-3 rounded hover:bg-gray-100 transition text-2xl font-medium">
     <User size={45} /> Profile
   </NavLink >
-  <NavLink to="/checkout"  className="w-full flex items-center gap-6 px-4 py-3 rounded hover:bg-gray-100 transition text-2xl font-medium">
+  <NavLink to="/product-orders"  className="w-full flex items-center gap-6 px-4 py-3 rounded hover:bg-gray-100 transition text-2xl font-medium">
     <Package size={45} /> Your Order
   </NavLink >
   <NavLink 

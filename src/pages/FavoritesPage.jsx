@@ -2,94 +2,106 @@ import React, { useState } from "react";
 import { Heart, MoreVertical } from "lucide-react";
 import { useFavorites } from "./FavoritesContext";
 import Navigation from "./Navigation";
+import { useNavigate } from "react-router";
 
-function FavoritesPage() {
+export default function FavoritesPage() {
   const { favorites, removeFromFavorites } = useFavorites();
-  const [popupId, setPopupId] = useState(null); 
+  const navigate = useNavigate();
 
-  const handleRemove = (id) => {
-    removeFromFavorites(id);
-    setPopupId(null); 
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const openRemoveModal = (e, item) => {
+    e.stopPropagation(); // Prevent navigation
+    setSelectedItem(item);
+    setOpenModal(true);
+  };
+
+  const closeModal = () => {
+    setOpenModal(false);
+    setSelectedItem(null);
   };
 
   return (
     <section className="min-h-screen bg-[#C7AD7F] px-4 sm:px-6 py-10">
-      {/* Header */}
-      <div className="w-fullflex items-center justify-start mb-10">
-        <h1 className="text-4xl font-bold text-black flex-1">Favorites</h1>
-      </div>
+      <h1 className="text-4xl font-bold text-black mb-8">Favorites</h1>
 
       {favorites.length === 0 ? (
-        <p className="text-black text-lg text-center">
+        <p className="text-center text-black text-lg">
           No favorites yet ☕ — add some from the menu!
         </p>
       ) : (
-        <div className="flex flex-col items-center gap-5">
+        <div className="flex flex-col gap-4">
           {favorites.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between bg-white shadow w-full max-w-md rounded-lg relative"
+              className="flex items-center w-full bg-white shadow-md overflow-hidden hover:scale-105 transition"
+              onClick={() => navigate(`/product/${item.id}`)}
             >
-              <div className="w-20 h-20 flex-shrink-0 overflow-hidden">
-                <img
-                  src={item.img}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
+              {/* LEFT IMAGE */}
+              <div className="w-20 h-20 bg-[#0F3A2E] flex items-center justify-center">
+                <img src={item.img} className="w-14 h-14 object-contain" />
               </div>
 
+              {/* TEXT */}
               <div className="flex-1 px-4">
-                <p className="text-lg font-medium text-black">{item.name}</p>
+                <h3 className="text-black font-semibold text-2xl leading-tight">
+                  {item.name}
+                </h3>
               </div>
 
-              <div className="flex items-center space-x-3 relative">
-                <Heart
-                  size={35}
-                  className="text-red-700 fill-red-700 cursor-pointer hover:scale-110 transition-transform"
-                  
-                />
-                <MoreVertical
-                  size={24}
-                  className="text-gray-600 cursor-pointer hover:text-black transition-colors"
-                  onClick={() =>
-                    setPopupId(popupId === item.id ? null : item.id)
-                  }
-                />
+              {/* HEART & DOTS */}
+              <div className="flex items-center gap-3 pr-3">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFromFavorites(item.id);
+                  }}
+                >
+                  <Heart size={40} className="fill-red-700 text-red-700" />
+                </button>
 
-                {popupId === item.id && (
-                  <div className="absolute top-0 right-8 bg-white rounded shadow-md p-3 flex flex-col text-center gap-2 w-48">
-  <p className="text-sm mb-3 font-medium text-black">
-    Remove from Favorites ? <span className="">{item.name}</span>
-  </p>
-  <div className="flex-col gap-2">
-    <button
-      onClick={() => handleRemove(item.id)}
-      className="bg-red-400 text-black px-7 py-2 rounded-4xl hover:bg-red-600 transition text-lg font-medium"
-    >
-      Remove
-    </button> <br />
-    <button
-      onClick={() => setPopupId(null)}
-      className=" text-black px-4 py-2 rounded-2xl text-lg font-medium"
-    >
-      Cancel
-    </button>
-  </div>
-</div>
-
-                )}
+                <button onClick={(e) => openRemoveModal(e, item)}>
+                  <MoreVertical size={30} className="text-black" />
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Bottom Nav */}
-      <div className="mt-10 sm:mt-12">
-        <Navigation />
-      </div>
+      {/* REMOVE CONFIRMATION MODAL */}
+      {openModal && selectedItem && (
+        <div className=" flex pl-15 px-7">
+          <div className="bg-white rounded-xl text-center p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-xl mb-2">Remove from Favorite?</h2>
+            <p className="text-black text-xl mb-6">{selectedItem.name}</p>
+
+            <div className="flex flex-col gap-3">
+              {/* REMOVE */}
+              <button
+                className=" bg-[#E7524E] text-black py-2 rounded-lg font-semibold"
+                onClick={() => {
+                  removeFromFavorites(selectedItem.id);
+                  closeModal();
+                }}
+              >
+                Remove
+              </button>
+
+              {/* CANCEL */}
+              <button
+                className=" bg-gray-300 py-2 rounded-lg font-semibold"
+                onClick={closeModal}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Navigation />
     </section>
   );
 }
-
-export default FavoritesPage;

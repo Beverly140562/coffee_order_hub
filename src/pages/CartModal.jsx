@@ -1,122 +1,107 @@
-import { ChevronLeft } from "lucide-react";
-import React, { useState } from "react";
-import Navigation from "./Navigation";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router";
+import Navigation from "./Navigation";
+import { useNavigate } from "react-router";
 
 function CartModal() {
-  const [cartItems, setCartItems] = useState(
-    JSON.parse(localStorage.getItem("cart")) || []
-  );
+  const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
 
-  const increment = (id) => {
-    setCartItems((prev) => {
-      const updated = prev.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    setCartItems(cart);
+  }, []);
+
+  const updateQuantity = (index, delta) => {
+    const updatedCart = [...cartItems];
+    const newQuantity = updatedCart[index].quantity + delta;
+    if (newQuantity < 1) return; // prevent negative quantity
+    updatedCart[index].quantity = newQuantity;
+    setCartItems(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
-  const decrement = (id) => {
-  setCartItems((prev) => {
-    const updated = prev
-      .map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-      .filter((item) => item.quantity > 0); 
+  const handleRemove = (index) => {
+    const updatedCart = [...cartItems];
+    updatedCart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setCartItems(updatedCart);
+  };
 
-    localStorage.setItem("cart", JSON.stringify(updated));
-    return updated;
-  });
-};
+  const getTotal = () => {
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
 
-
-  const total = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#C7AD7F] text-black">
+        <h2 className="text-3xl mb-4">Your cart is empty</h2>
+        <NavLink to="/menu" className="text-xl underline">
+          Go to Menu
+        </NavLink>
+      </div>
+    );
+  }
 
   return (
-    <section className="min-h-screen bg-[#C7AD7F] px-4 sm:px-6 pt-10 relative">
-      {/* Header */}
-      <div className="flex items-center mb-8">
-        <button className="p-2 rounded-full hover:bg-gray-200 transition">
-          <ChevronLeft size={40} className="text-black" />
-        </button>
-        <h1 className="ml-4 text-4xl sm:text-5xl font-bold text-black">Cart</h1>
-      </div>
+    <section className="min-h-screen bg-[#C7AD7F] ">
+      <h1 className="text-4xl mb-8  font-semibold text-black pl-5 pt-10">Cart</h1>
+      <p className="text-3xl pb-2 font-semibold pl-5">Order Items</p>
 
-      {/* Cart Items */}
-      <div className="max-w-md mx-auto p-2 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
-        <h2 className="text-3xl font-semibold text-black mb-4">Order Items</h2>
+      <div className="space-y-1 max-h-[50vh] overflow-y-auto px-1">
+  {cartItems.map((item, index) => (
+    <div key={index} className="flex justify-between items-center p-4">
+      <div className="flex items-center gap-4">
+        <img src={item.img} alt={item.name} className="w-30 h-32 object-cover" />
 
-        {cartItems.map((item) => (
-          <div key={item.id} className="flex justify-between items-start pb-4">
-            <div className="flex items-start gap-4">
-              <img
-                src={item.img}
-                alt={item.name}
-                className="w-30 h-24 object-cover shadow"
-              />
-              <div className="flex flex-col gap-1">
-                <p className=" text-xl text-black flex flex-row pb-2">
-                  {item.name}
-                  <span className="ml-auto font-semibold text-black">
-                    ₱{item.price}
-                  </span>
-                </p>
-
-                {item.flavor && <span className="text-black text-lg">Flavor: {item.flavor}</span>}
-                {item.size && <span className="text-black text-lg">Size: {item.size}</span>}
-
-                <div className="flex items-center gap-25 justify-between w-full mt-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => decrement(item.id)}
-                      className="text-black px-3 py-1 text-xl"
-                    >
-                      -
-                    </button>
-                    <span className="text-black font-medium">{item.quantity}</span>
-                    <button
-                      onClick={() => increment(item.id)}
-                      className="text-black px-3 py-1 text-xl"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="font-semibold text-black text-lg">
-                    ₱ {item.price * item.quantity}
-                  </span>
-                </div>
-              </div>
-            </div>
+        <div className="flex flex-col justify-between">
+          {/* Name and price */}
+          <div className="flex justify-between w-full">
+            <h2 className="text-xl font-semibold">{item.name}</h2>
+            <span className="text-2xl">₱ {item.price}</span>
           </div>
-        ))}
+
+          <p className="pt-2 text-lg">Flavor: {item.flavor || "None"}</p>
+          <p className="text-lg">Size: {item.size}</p>
+
+          {/* Quantity controls */}
+          <div className="flex items-center gap-7 mt-2">
+            <button
+              onClick={() => updateQuantity(index, -1)}
+              className="text-black text-xl font-bold px-3 py-1 "
+            >
+              -
+            </button>
+            <span className="text-lg font-medium">{item.quantity}</span>
+            <button
+              onClick={() => updateQuantity(index, 1)}
+              className="text-black text-xl font-bold px-3 py-1 "
+            >
+              +
+            </button>
+
+            {/* Subtotal */}
+            <span className="ml-4 text-2xl ">₱ {item.price * item.quantity}</span>
+          </div>
+        </div>
       </div>
-
-      {/* Checkout Section */}
-      <div className="fixed bottom-20 left-0 right-0 bg-[#C7AD7F] py-5 shadow-lg">
-  <div className="max-w-md mx-auto flex flex-col gap-4 px-4">
-    <div className="flex justify-between items-center text-3xl font-semibold text-black">
-      <span>Total:</span>
-      <span>₱ {total}</span>
     </div>
-
-    <NavLink
-      to="/checkoutpayment"
-      className="bg-[#E7524E] text-black py-3 text-center text-3xl font-semibold transition hover:bg-red-600 rounded"
-    >
-      Check Out
-    </NavLink>
-  </div>
+  ))}
 </div>
 
 
-      {/* Navigation */}
+        {/* Total */}
+        <div className="flex justify-end items-center gap-2 p-4 mt-6 mb-8">
+          <h2 className="text-3xl ">Total: </h2>
+          <span className="text-3xl">₱ {getTotal()}</span>
+        </div>
+
+        <button onClick={() => navigate("/checkout")} className=" bg-[#E7524E] text-black px-30 py-2 m-8 text-3xl transition">
+          Checkout
+        </button>
+    
+
+      {/* Bottom Nav */}
       <div className="mt-10 sm:mt-12">
         <Navigation />
       </div>
