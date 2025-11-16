@@ -9,60 +9,49 @@ import LandingPage from "./pages/LandingPage";
 import AdminProduct from "./pages/AdminProduct";
 import AdminManage from "./pages/AdminManage";
 import LoadingPage from "./pages/LoadingPage";
-<<<<<<< HEAD
 import FavoritesPage from "./pages/FavoritesPage";
-import ProfilePage from "./pages/ProfilePage";
-import CartModal from "./pages/CartModal";
-import { FavoritesProvider } from "./pages/FavoritesContext"
-import ProductOrder from "./pages/ProductOrder";
-import MenuCart from "./pages/ProductDetails";
+import { FavoritesProvider } from "./pages/FavoritesContext";
 import ProductDetails from "./pages/ProductDetails";
-import CheckOut from "./pages/CheckOut";
+import CartModal from "./pages/CartModal";
+import CheckoutPage from "./pages/CheckOutPage";
+import ProfilePage from "./pages/ProfilePage";
+import ProductOrder from "./pages/ProductOrder";
 
 function App() {
   return (
     <FavoritesProvider>
-=======
+      <BrowserRouter>
+        <Toaster position="top-center" />
 
-function App() {
-  return (
->>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
-    <BrowserRouter>
-      <Toaster position="top-center" />
+        <Routes>
+          {/* Default redirect */}
+          <Route path="/" element={<LandingPage />} />
 
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
+          {/* Landing/Login/Registration */}
+          <Route path="/landing" element={<LoadingPage />} />
+          <Route path="/signup" element={<Registration />} />
+          <Route path="/login" element={<Registration />} />
 
-        {/*  login/registration */}
-        <Route path="/landing" element={<LoadingPage />} />
-        <Route path="/signup" element={<Registration />} />
-        <Route path="/login" element={<Registration />} />
+          {/* User pages */}
+          <Route path="/menu" element={<ProductSection />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/cart" element={<CartModal />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/product-orders" element={<ProductOrder />} />
 
 
-        {/* User site */}
-        <Route path="/menu" element={<ProductSection />} />
-<<<<<<< HEAD
-        <Route path="/favorites" element={<FavoritesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/cart" element={<CartModal />} />
-        <Route path="/about" element={<FavoritesProvider />} />
-        <Route path="/checkout" element={<ProductOrder />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/checkoutpayment" element={<CheckOut />} />
-=======
+          {/* Admin pages */}
+          <Route path="/portal" element={<AdminPage />} />
+          <Route path="/add-product" element={<AdminProduct />} />
+          <Route path="/orders" element={<AdminManage />} />
 
->>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
-
-        {/* Admin section */}
-        <Route path="/portal" element={<AdminPage />} />
-        <Route path="/add-product" element={<AdminProduct />} />
-        <Route path="/orders" element={<AdminManage />} />
-      </Routes>
-<<<<<<< HEAD
-    </BrowserRouter></FavoritesProvider>
-=======
-    </BrowserRouter>
->>>>>>> 7b8ca11e9861644c7542e3d133bee3e120f69390
+          {/* Catch-all: redirect unknown routes to landing */}
+          <Route path="*" element={<Navigate to="/landing" />} />
+        </Routes>
+      </BrowserRouter>
+    </FavoritesProvider>
   );
 }
 
