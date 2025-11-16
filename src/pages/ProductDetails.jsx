@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, Heart } from "lucide-react";
 import { NavLink, useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
-import { useFavorites } from "./FavoritesContext"; // import context
+import { useFavorites } from "./FavoritesContext";
 import cappuccino from "../assets/capuccino.jpg";
 import espresso from "../assets/espresso.jpg";
 import latte from "../assets/latte.jpg";
@@ -18,7 +18,7 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites(); // use context
+  const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites(); 
 
   const products = [
     { id: 1, name: "Cappuccino", desc: "Espresso with chocolate and milk.", img: cappuccino, price: 150 },
@@ -79,7 +79,7 @@ export default function ProductDetails() {
 
   return (
     <section className="min-h-screen bg-[#C7AD7F]">
-      {/* Product Image */}
+    
       <div className="relative w-full max-w-2xl mx-auto h-[43vh] sm:h-[65vh]">
         <NavLink to="/menu" className="absolute left-4 sm:left-10 top-6 z-10">
           <ChevronLeft size={50} className="text-black" />
@@ -173,4 +173,5 @@ export default function ProductDetails() {
       </div>
     </section>
   );
+
 }
