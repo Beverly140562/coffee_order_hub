@@ -30,7 +30,7 @@ export default function ProductSection() {
   const filtered = products.filter((p) => p.category === activeTab);
 
   const toggleFavorite = (e, item) => {
-    e.stopPropagation(); // important to prevent navigation when clicking favorite
+    e.stopPropagation();
 
     const isLiked = favorites.some((f) => f.id === item.id);
 
@@ -43,7 +43,6 @@ export default function ProductSection() {
 
   return (
     <section className="min-h-screen bg-[#C7AD7F] px-4 sm:px-6 py-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-5xl font-bold text-black m-2">Hi, Rober</h1>
@@ -67,7 +66,6 @@ export default function ProductSection() {
         ))}
       </div>
 
-      {/* Product Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {filtered.map((item) => {
           const isLiked = favorites.some((f) => f.id === item.id);
@@ -104,3 +102,4 @@ export default function ProductSection() {
     </section>
   );
 }
+
