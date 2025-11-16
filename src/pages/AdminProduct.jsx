@@ -81,7 +81,7 @@ function AdminProduct({ showForm = true, showTable = true }) {
         </NavLink>
       )}
 
-      <h2 className="text-3xl font-semibold text-black pl-5 pb-3">Add Products</h2>
+      <h2 className="text-3xl font-semibold text-black pl-10 pb-3">Add Products</h2>
 
       <div className="flex justify-center">
         <button
@@ -94,7 +94,7 @@ function AdminProduct({ showForm = true, showTable = true }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleAddProduct} className="p-5 mb-8 m-8 space-y-4 border rounded-lg bg-white/40 backdrop-blur">
+        <form onSubmit={handleAddProduct} className="p-6 mb-8 m-5 space-y-4 border  backdrop-blur">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               name="name"
@@ -119,7 +119,7 @@ function AdminProduct({ showForm = true, showTable = true }) {
               onChange={handleChange}
               className="w-full p-2 border-2 border-black rounded"
             >
-              <option value="">Select Category</option>
+              <option value="">Category</option>
               <option value="Hot Coffee">Hot Coffee</option>
               <option value="Cold Coffee">Cold Coffee</option>
               <option value="Frappuccino">Frappuccino</option>
@@ -143,7 +143,7 @@ function AdminProduct({ showForm = true, showTable = true }) {
             />
           </div>
 
-          <button className="bg-amber-900 text-white w-full py-2 rounded hover:bg-amber-800 transition">
+          <button className="bg-[#8B4411] mt-10 text-black text-2xl font-semibold w-full py-2 border-2 rounded transition">
             Add Product
           </button>
 
