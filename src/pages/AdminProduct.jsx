@@ -1,23 +1,33 @@
-import { Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
+import { useLocation } from "react-router";
 
 function AdminProduct({ showForm = true, showTable = true }) {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [initialized, setInitialized] = useState(false);
   const [showMessage, setShowMessage] = useState('');
-  const [form, setForm] = useState({ name: '', price: '', category: '', image_url: '', description: '' });
+  const [form, setForm] = useState({
+    name: '',
+    price: '',
+    category: '',
+    image_url: '',
+    description: ''
+  });
 
-  // Load products from localStorage
+  const location = useLocation();
+
   useEffect(() => {
     const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
     setProducts(savedProducts);
+    setInitialized(true);
   }, []);
 
-  // Save products to localStorage whenever products change
   useEffect(() => {
+    if (!initialized) return;
     localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
+  }, [products, initialized]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,7 +42,7 @@ function AdminProduct({ showForm = true, showTable = true }) {
     }
 
     const newProduct = {
-      id: products.length ? products[products.length - 1].id + 1 : 1,
+      id: crypto.randomUUID(),
       name: form.name,
       price: Number(form.price),
       category: form.category,
@@ -40,118 +50,141 @@ function AdminProduct({ showForm = true, showTable = true }) {
       description: form.description,
     };
 
-    const updatedProducts = [...products, newProduct];
+    setProducts([...products, newProduct]);
 
-    setProducts(updatedProducts); // update state
-    setForm({ name: '', price: '', category: '', image_url: '', description: '' });
+    setForm({
+      name: '',
+      price: '',
+      category: '',
+      image_url: '',
+      description: ''
+    });
+
     setShowMessage('✅ Product added successfully!');
     setTimeout(() => setShowMessage(''), 3000);
-
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
   };
 
   const handleDelete = (id) => {
-    const updatedProducts = products.filter((p) => p.id !== id);
-    setProducts(updatedProducts);
-    localStorage.setItem('products', JSON.stringify(updatedProducts)); // update storage immediately
+    setProducts(products.filter((p) => p.id !== id));
   };
 
+  const buttonClass = `flex items-center gap-2 text-2xl px-5 py-2 font-semibold text-black mb-5 hover:text-amber-600 transition ${
+    location.pathname === "/portal" ? "border" : ""
+  }`;
+
   return (
-    <div className="min-h-screen bg-[#C7AD7F] p-5">
-      <h2 className="text-2xl font-semibold text-black pb-5">Add Products</h2>
-      <button
-        onClick={() => navigate("/add-product")}
-        className="flex items-center gap-2 text-lg font-semibold text-black mb-10 hover:text-amber-600 transition"
-      >
-        <Plus size={20} />
-        Add New Coffee
-      </button>
+    <div className="w-full pb-10 bg-[#C7AD7F]">
+
+      {location.pathname !== "/portal" && (
+        <NavLink to="/portal" className="p-2 transition">
+          <ChevronLeft size={60} className="text-black" />
+        </NavLink>
+      )}
+
+      <h2 className="text-3xl font-semibold text-black pl-5 pb-3">Add Products</h2>
+
+      <div className="flex justify-center">
+        <button
+          onClick={() => navigate("/add-product")}
+          className={buttonClass}
+        >
+          <Plus size={20} />
+          Add New Coffee
+        </button>
+      </div>
 
       {showForm && (
-        <form onSubmit={handleAddProduct} className="p-6 rounded-lg shadow-md w-full mb-8 space-y-4">
+        <form onSubmit={handleAddProduct} className="p-5 mb-8 m-8 space-y-4 border rounded-lg bg-white/40 backdrop-blur">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="Product Name"
-              className="w-full p-2 border border-black rounded"
+              className="w-full p-2 border-2 border-black rounded"
             />
+
             <input
               name="price"
               value={form.price}
               onChange={handleChange}
               placeholder="Price"
               type="number"
-              className="w-full p-2 border border-black rounded"
+              className="w-full p-2 border-2 border-black rounded"
             />
-            <input
+
+            <select
               name="category"
               value={form.category}
               onChange={handleChange}
-              placeholder="Category"
-              className="w-full p-2 border border-black rounded"
-            />
+              className="w-full p-2 border-2 border-black rounded"
+            >
+              <option value="">Select Category</option>
+              <option value="Hot Coffee">Hot Coffee</option>
+              <option value="Cold Coffee">Cold Coffee</option>
+              <option value="Frappuccino">Frappuccino</option>
+            </select>
+
             <input
               name="image_url"
               value={form.image_url}
               onChange={handleChange}
               placeholder="Image URL"
-              className="w-full p-2 border border-black rounded"
+              className="w-full p-2 border-2 border-black rounded"
             />
+
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
               placeholder="Description"
-              className="w-full p-2 border border-black rounded resize-none col-span-1 sm:col-span-2"
+              className="w-full p-2 border-2 border-black rounded resize-none col-span-1 sm:col-span-2"
               rows={3}
             />
           </div>
+
           <button className="bg-amber-900 text-white w-full py-2 rounded hover:bg-amber-800 transition">
             Add Product
           </button>
+
           {showMessage && <p className="text-center text-green-600 mt-2">{showMessage}</p>}
         </form>
       )}
 
       {showTable && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
-            <thead className="bg-amber-100">
+        <div className="max-h-[30vh] overflow-y-auto border-2 backdrop-blur">
+          <table className="min-w-full table-fixed">
+            <thead className="sticky top-0 bg-[#C7AD7F] z-10">
               <tr>
-                <th className="px-4 py-2 border">Image</th>
-                <th className="px-4 py-2 border">Name</th>
+                <th className="px-4 py-2 border">Coffee Name</th>
                 <th className="px-4 py-2 border">Category</th>
                 <th className="px-4 py-2 border">Price</th>
-                <th className="px-4 py-2 border">Description</th>
-                <th className="px-4 py-2 border">Actions</th>
+                <th className="px-4 py-2 border">Delete</th>
               </tr>
             </thead>
+
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className="hover:bg-amber-50 transition">
-                  <td className="px-4 py-2 border">
-                    <img src={p.image_url} alt={p.name} className="w-16 h-16 object-cover rounded" />
-                  </td>
-                  <td className="px-4 py-2 border">{p.name}</td>
-                  <td className="px-4 py-2 border">{p.category}</td>
-                  <td className="px-4 py-2 border">₱{p.price}</td>
-                  <td className="px-4 py-2 border max-w-xs truncate">{p.description}</td>
+                <tr key={p.id} className="transition">
+                  <td className="px-4 py-2 text-center border">{p.name}</td>
+                  <td className="px-4 py-2 text-center border">{p.category}</td>
+                  <td className="px-4 py-2 text-center border">₱ {p.price}</td>
                   <td className="px-4 py-2 border text-center">
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:opacity-80 transition"
+                      className="px-3 py-1 transition"
                     >
-                      Delete
+                      <Trash2 />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
       )}
+
     </div>
   );
 }

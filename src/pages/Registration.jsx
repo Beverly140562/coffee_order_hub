@@ -20,21 +20,31 @@ export default function Registration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
 
-    if (isLogin) {
-      if (formData.role.toLowerCase() === "admin") {
-        navigate("/portal");
-      } else {
-        navigate("/menu");
-      }
-      alert(`✅ Logged in as ${formData.email}`);
+  localStorage.setItem("user", JSON.stringify(formData));
+
+  if (isLogin) {
+    if (formData.role.toLowerCase() === "admin") {
+      navigate("/portal");
     } else {
-      alert(`✅ Account created for ${formData.email}`);
-      setIsLogin(true);
+      navigate("/menu");
     }
-  };
+    alert(`✅ Logged in as ${formData.email}`);
+  } else {
+    alert(`✅ Account created for ${formData.email}`);
+    setIsLogin(true);
+
+    if (formData.role.toLowerCase() === "admin") {
+      navigate("/portal");
+    } else {
+      navigate("/menu");
+    }
+  }
+};
+
+
 
   const toggleForm = () => {
     setIsLogin(!isLogin);

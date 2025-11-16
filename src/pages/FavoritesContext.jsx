@@ -1,4 +1,3 @@
-// FavoritesContext.jsx
 import React, { createContext, useContext, useState } from "react";
 
 const FavoritesContext = createContext();

@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { Toaster } from "react-hot-toast";
 import ProductSection from "./pages/ProductSection";
-import AboutSection from "./pages/AboutSection";
-import Footer from "./pages/Footer";
 import AdminPage from "./pages/AdminPage";
 import Registration from "./pages/Registration";
 import LandingPage from "./pages/LandingPage";
@@ -47,7 +45,6 @@ function App() {
           <Route path="/add-product" element={<AdminProduct />} />
           <Route path="/orders" element={<AdminManage />} />
 
-          {/* Catch-all: redirect unknown routes to landing */}
           <Route path="*" element={<Navigate to="/landing" />} />
         </Routes>
       </BrowserRouter>
