@@ -76,7 +76,7 @@ export default function ProductSection() {
               onClick={() => navigate(`/product/${item.id}`)}
               className="border-2 shadow-md relative overflow-hidden hover:scale-105 transition cursor-pointer"
             >
-              <img src={item.image_url} className="w-full h-46 object-cover" />
+              <img src={item.image_url} className="w-full h-36 object-cover" />
               <button
                 onClick={(e) => toggleFavorite(e, item)}
                 className="absolute top-3 right-3 z-10"
@@ -87,8 +87,8 @@ export default function ProductSection() {
                 />
               </button>
               <div className="p-3">
-                <h3 className="font-semibold text-lg truncate">{item.name}</h3>
-                <p className="text-sm mt-1 line-clamp-2">{item.description}</p>
+                <h3 className="font-semibold text-lg">{item.name}</h3>
+                <p className="text-sm mt-1 ">{item.description}</p>
               </div>
             </div>
           );
