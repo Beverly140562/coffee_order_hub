@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router";
 import Navigation from "./Navigation";
 import { supabase } from "../config/supabase";
+import { Loader2 } from "lucide-react";
 
 export default function CartModal() {
   const [cartItems, setCartItems] = useState([]);
@@ -44,7 +45,6 @@ export default function CartModal() {
   const newQuantity = updatedCart[index].quantity + delta;
 
   if (newQuantity < 1) {
-    // Remove item if quantity goes below 1
     updatedCart.splice(index, 1);
   } else {
     updatedCart[index].quantity = newQuantity;
@@ -62,7 +62,11 @@ export default function CartModal() {
   const getTotal = () =>
     cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  if (!user) return null;
+  if (!user) return <p className="min-h-screen flex flex-col items-center justify-center bg-[#C7AD7F] text-black text-2xl">
+  <Loader2 className="w-10 h-10 animate-spin mb-4" />
+  Loading...
+</p>
+;
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#C7AD7F] text-black">

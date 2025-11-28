@@ -8,16 +8,15 @@ import AdminProduct from "./pages/AdminProduct";
 import AdminManage from "./pages/AdminManage";
 import LoadingPage from "./pages/LoadingPage";
 import FavoritesPage from "./pages/FavoritesPage";
-import { FavoritesProvider } from "./pages/FavoritesContext";
 import ProductDetails from "./pages/ProductDetails";
 import CartModal from "./pages/CartModal";
-import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutPage from "./pages/CheckOutPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProductOrder from "./pages/ProductOrder";
 
 function App() {
   return (
-    <FavoritesProvider>
+  
       <BrowserRouter>
         <Toaster position="top-center" />
 
@@ -49,7 +48,7 @@ function App() {
           <Route path="*" element={<Navigate to="/landing" />} />
         </Routes>
       </BrowserRouter>
-    </FavoritesProvider>
+  
   );
 }
 
