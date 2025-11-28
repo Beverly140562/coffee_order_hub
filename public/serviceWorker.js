@@ -27,26 +27,31 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const requestUrl = new URL(event.request.url);
+  const isSupabaseAPI = requestUrl.origin.includes("supabase.co");
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
 
       return fetch(event.request)
         .then((response) => {
-          // Only cache valid responses
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
+          if (!response || response.status !== 200 || response.type !== "basic") return response;
+
           const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          caches.open(CACHE_NAME).then((cache) => {
+            if (isSupabaseAPI || requestUrl.origin === location.origin) {
+              cache.put(event.request, responseClone);
+            }
+          });
           return response;
         })
         .catch(() => {
-          // Offline fallback for navigations
-          if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
-          }
-        });
+          // **Important**: return index.html for SPA navigations
+          if (event.request.mode === "navigate") return caches.match("/index.html");
+          if (isSupabaseAPI) return caches.match(event.request);
+        })
     })
   );
 });
+
