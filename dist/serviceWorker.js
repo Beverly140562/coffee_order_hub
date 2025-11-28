@@ -1,6 +1,7 @@
 const CACHE_NAME = "coffee_order_v2";
 const STATIC_ASSETS = [
   "/",
+  "/landing",
   "/index.html",
   "/logo.png",
   "/manifest.json"
