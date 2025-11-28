@@ -3,11 +3,9 @@ const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/logo.png",
-  "/assets/index-CxNPDb3W.js",
-  "/assets/index-B2IlStPH.css",
-  "/assets/manifest-C3z82WiD.json",
-  "/vite.svg", "/manifest.json"
+  "/manifest.json"
 ];
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
