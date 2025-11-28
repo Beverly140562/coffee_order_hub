@@ -1,0 +1,20 @@
+{
+  "short_name": "CoffeeOrder",
+  "name": "coffee_order",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "64x64 32x32 24x24 16x16"
+    },
+    {
+      "src": "logo1.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#C7AD7F",
+  "theme_color": "#C7AD7F"
+}
