@@ -10,7 +10,7 @@ import LoadingPage from "./pages/LoadingPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ProductDetails from "./pages/ProductDetails";
 import CartModal from "./pages/CartModal";
-import CheckoutPage from "./pages/CheckOutPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProductOrder from "./pages/ProductOrder";
 
