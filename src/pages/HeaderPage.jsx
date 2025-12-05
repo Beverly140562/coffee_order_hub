@@ -36,12 +36,21 @@ export default function HeaderPage() {
   fetchUserName();
 }, []);
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Hi, Good Morning";
+  if (hour < 18) return "Hi, Good Afternoon";
+  return "Hi, Good Evening";
+};
+
+
 
   return (
     <div className="flex justify-between items-center p-5">
       <div>
-        <h1 className="text-5xl font-bold text-black pt-10">
-          Hi, {userName}
+        <h1 className="text-2xl font-bold text-black pt-10">
+          {getGreeting()}
         </h1>
         <p className="text-lg text-black mt-3">
           Good ideas start with coffee.
