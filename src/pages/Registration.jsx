@@ -8,13 +8,15 @@ export default function Registration({ register }) {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(register === "login");
   const [showPassword, setShowPassword] = useState(false);
+
   const [formData, setFormData] = useState({
-    first_name: "",
     last_name: "",
     role: "",
     email: "",
     password: "",
   });
+
+  const allowedRoles = ["admin", "user", "guest"];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -25,9 +27,18 @@ export default function Registration({ register }) {
     e.preventDefault();
     const email = formData.email.trim();
     const password = formData.password;
+    const role = formData.role.toLowerCase();
 
     if (!email || !password) {
       toast.error("Email and password are required.");
+      return;
+    }
+    if (!isLogin && (!formData.last_name || !role)) {
+      toast.error("Last name and role are required.");
+      return;
+    }
+    if (!isLogin && !allowedRoles.includes(role)) {
+      toast.error(`Role must be one of: ${allowedRoles.join(", ")}`);
       return;
     }
 
@@ -35,18 +46,22 @@ export default function Registration({ register }) {
       let user;
 
       if (isLogin) {
-        // LOGIN
         const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
         if (loginError || !loginData.user) {
           toast.error(loginError?.message || "Login failed");
           return;
         }
         user = loginData.user;
-
       } else {
-        // SIGNUP
-        if (!formData.first_name || !formData.last_name || !formData.role) {
-          toast.error("First name, last name, and role are required.");
+        
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", email)
+          .single();
+
+        if (existingUser) {
+          toast.error("Email already registered. Please log in.");
           return;
         }
 
@@ -58,13 +73,11 @@ export default function Registration({ register }) {
 
         const userId = signUpData.user.id;
 
-        // Save user details in users table
         const { error: insertError } = await supabase.from("users").insert([
           {
             id: userId,
-            first_name: formData.first_name,
             last_name: formData.last_name,
-            role: formData.role.toLowerCase(),
+            role,
             email,
           },
         ]);
@@ -73,58 +86,119 @@ export default function Registration({ register }) {
           return;
         }
 
-        // Auto-login after signup
         const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
         if (loginError || !loginData.user) {
-          toast.error("Signup successful but auto-login failed. Please log in manually.");
+          toast.error("Signup succeeded but auto-login failed. Please login manually.");
           return;
         }
         user = loginData.user;
       }
 
-      // Get role from users table
       const { data: userData, error } = await supabase
-      .from("users")
-      .select("role, first_name, last_name")
-      .eq("id", user.id)
-      .single();
+        .from("users")
+        .select("role, last_name")
+        .eq("id", user.id)
+        .single();
+
       if (error || !userData) {
-        toast.error("User role not found. Contact admin.");
+        toast.error("User role not found.");
         return;
       }
 
-      // Save user to localStorage
-      const role = userData.role.toLowerCase();
+      const userRole = userData.role.toLowerCase();
+
       localStorage.setItem(
         "user",
         JSON.stringify({
           id: user.id,
           email,
-          role,
-          first_name: userData.first_name,
+          role: userRole,
           last_name: userData.last_name,
         })
       );
 
-      // Navigate based on role
-      if (role === "admin") navigate("/portal");
+      // Redirect based on role
+      if (userRole === "admin") navigate("/home");
       else navigate("/menu");
-
     } catch (err) {
       console.error("Auth error:", err);
-      toast(err.message || "Something went wrong");
+      toast.error(err.message || "Something went wrong");
     }
   };
 
+const handleGuestLogin = async () => {
+  try {
+    const guestId = crypto.randomUUID();
+    const guestEmail = `guest_${guestId}@guest.com`;
+    const guestPassword = crypto.randomUUID(); 
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: guestEmail,
+      password: guestPassword,
+    });
+
+    if (signUpError) {
+      toast.error("Guest signup failed: " + signUpError.message);
+      console.error("Supabase Auth error:", signUpError);
+      return;
+    }
+
+    const userId = signUpData.user.id;
+
+    const { error: insertError } = await supabase.from("users").upsert(
+      [
+        {
+          id: userId,
+          last_name: "Guest",
+          role: "guest",
+          email: guestEmail,
+        },
+      ],
+      { onConflict: ["email"] } 
+    );
+
+    if (insertError) {
+      toast.error("Failed to save guest data: " + insertError.message);
+      console.error("Supabase Table error:", insertError);
+      return;
+    }
+
+    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+      email: guestEmail,
+      password: guestPassword,
+    });
+
+    if (loginError || !loginData.user) {
+      toast.error("Guest login failed: please try again.");
+      console.error("Supabase login error:", loginError);
+      return;
+    }
+
+    const guestUser = {
+      id: userId,
+      email: guestEmail,
+      last_name: "Guest",
+      role: "guest",
+    };
+    localStorage.setItem("user", JSON.stringify(guestUser));
+
+    navigate("/menu");
+    toast.success("Logged in as Guest!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Guest login error");
+  }
+};
+
+
   const toggleForm = () => {
     setIsLogin(!isLogin);
-    setFormData({ first_name: "", last_name: "", role: "", email: "", password: "" });
+    setFormData({ last_name: "", role: "", email: "", password: "" });
   };
 
   return (
     <div className="min-h-screen bg-[#C7AD7F] flex justify-center items-start p-4 sm:p-8">
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
-        {/* HEADER */}
         <div className="flex items-center justify-between mb-10">
           <NavLink to="/landing" className="text-black">
             <ArrowLeft size={40} />
@@ -142,39 +216,32 @@ export default function Registration({ register }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
-                  <input
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleInputChange}
-                    placeholder="First Name"
-                    className="w-full pl-11 py-3 border outline-none"
-                  />
-                </div>
-
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
-                  <input
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleInputChange}
-                    placeholder="Last Name"
-                    className="w-full pl-11 py-3 border outline-none"
-                  />
-                </div>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
+                <input
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                  placeholder="Last Name"
+                  className="w-full pl-11 py-3 border outline-none"
+                />
               </div>
 
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-5 h-5" />
-                <input
+                <select
                   name="role"
                   value={formData.role}
                   onChange={handleInputChange}
-                  placeholder="Role: admin or user"
                   className="w-full pl-11 py-3 border outline-none"
-                />
+                >
+                  <option value="">Select Role</option>
+                  {allowedRoles.map((r) => (
+                    <option key={r} value={r}>
+                      {r.charAt(0).toUpperCase() + r.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </>
           )}
@@ -216,7 +283,7 @@ export default function Registration({ register }) {
             type="submit"
             className="w-full text-black border py-3 text-xl font-semibold transition hover:-translate-y-1 hover:shadow-xl"
           >
-            {isLogin ? "Sign in" : "Sign Up"}
+            {isLogin ? "Sign In" : "Sign Up"}
           </button>
         </form>
 
@@ -224,6 +291,16 @@ export default function Registration({ register }) {
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button onClick={toggleForm} className="font-semibold hover:underline">
             {isLogin ? "Sign Up" : "Login"}
+          </button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={handleGuestLogin}
+            className="w-full text-black border py-3 text-xl font-semibold transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            Continue as Guest
           </button>
         </div>
       </div>

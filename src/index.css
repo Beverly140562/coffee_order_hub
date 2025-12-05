@@ -11,3 +11,14 @@
   63% { content: ".."; }
   100% { content: "..."; }
 }
+
+@keyframes badgePulse {
+  0% { transform: scale(1); background-color: #f00; }
+  50% { transform: scale(1.4); background-color: #ff6666; }
+  100% { transform: scale(1); background-color: #f00; }
+}
+
+.animate-badge {
+  animation: badgePulse 1s ease-in-out;
+}
+

@@ -11,8 +11,8 @@ export default function FavoritesPage({ user: propUser }) {
   const [favItems, setFavItems] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const LOCAL_FAV_KEY = "guest_favorites";
 
-  // Fetch user from Supabase
   useEffect(() => {
     const fetchUser = async () => {
       if (!user) {
@@ -22,7 +22,6 @@ export default function FavoritesPage({ user: propUser }) {
           return;
         }
 
-        // Get role from profile
         const { data: profile } = await supabase
           .from("users")
           .select("id, role")
@@ -36,11 +35,24 @@ export default function FavoritesPage({ user: propUser }) {
     fetchUser();
   }, [user]);
 
-  // Fetch favorites only if user exists and role === "user"
-  useEffect(() => {
-    if (user?.role !== "user") return;
+  
+useEffect(() => {
+  if (!user) {
+    setFavItems(getLocalFavorites());
+  } else {
     fetchFavorites();
-  }, [user]);
+  }
+}, [user]);
+
+
+  const getLocalFavorites = () => {
+  const stored = localStorage.getItem(LOCAL_FAV_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveLocalFavorites = (items) => {
+  localStorage.setItem(LOCAL_FAV_KEY, JSON.stringify(items));
+};
 
   const fetchFavorites = async () => {
     try {
@@ -79,21 +91,30 @@ export default function FavoritesPage({ user: propUser }) {
   };
 
   const removeFavorite = async (favoriteId) => {
-    try {
-      const { error } = await supabase
-        .from("favorites")
-        .delete()
-        .eq("id", favoriteId);
+  if (!user) {
+    const updated = favItems.filter(item => item.favoriteId !== favoriteId);
+    setFavItems(updated);
+    saveLocalFavorites(updated);
+    toast.success("Removed from favorites!");
+    return;
+  }
 
-      if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from("favorites")
+      .delete()
+      .eq("id", favoriteId);
 
-      setFavItems(favItems.filter(item => item.favoriteId !== favoriteId));
-      toast.success("Removed from favorites!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to remove favorite!");
-    }
-  };
+    if (error) throw error;
+
+    setFavItems(favItems.filter(item => item.favoriteId !== favoriteId));
+    toast.success("Removed from favorites!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to remove favorite!");
+  }
+};
+
 
   const openRemoveModal = (e, item) => {
     e.stopPropagation();
@@ -106,13 +127,13 @@ export default function FavoritesPage({ user: propUser }) {
     setSelectedItem(null);
   };
 
-  if (!user) return <p className="min-h-screen flex flex-col items-center justify-center bg-[#C7AD7F] text-black text-2xl">
-  <Loader2 className="w-10 h-10 animate-spin mb-4" />
-  Loading...
-</p>
-
-  if (user.role !== "user")
-    return <p className="text-center mt-10 text-red-600">Only regular users can view favorites.</p>;
+if (user === undefined) {
+  return (
+    <p className="min-h-screen flex items-center justify-center text-2xl">
+      Loading...
+    </p>
+  );
+}
 
   return (
     <section className="min-h-screen bg-[#C7AD7F] px-4 sm:px-6 py-10">

@@ -16,48 +16,39 @@ export default function ProductDetails() {
 
   const flavors = ["Chocolate", "Almond", "Vanilla"];
   const sizes = ["S", "M", "L"];
-  const sizeMap = { S: "Small", M: "Medium", L: "Large" };
   const sizePrices = { S: 0, M: 20, L: 40 };
 
-  // Fetch user and product
   useEffect(() => {
     async function fetchData() {
-      //  Check user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        navigate("/signup");
-        return;
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        setUser(authUser || null);
+
+        const { data: productData, error: productError } = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (productError || !productData) {
+          toast.error("Product not found");
+          return;
+        }
+        setProduct(productData);
+
+        if (authUser) {
+          const { data: favs, error: favError } = await supabase
+            .from("favorites")
+            .select("*")
+            .eq("user_id", authUser.id);
+          if (!favError) setFavorites(favs || []);
+        }
+      } catch (err) {
+        console.error(err);
       }
-      setUser(authUser);
-
-      // Fetch product
-      const { data: productData, error: productError } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (productError || !productData) {
-        toast.error("Product not found");
-        return;
-      }
-      setProduct(productData);
-
-      //  Fetch favorites
-      const { data: favs, error: favError } = await supabase
-        .from("favorites")
-        .select("*")
-        .eq("user_id", authUser.id);
-
-      if (favError) {
-        toast.error("Failed to fetch favorites");
-        return;
-      }
-      setFavorites(favs || []);
     }
-
     fetchData();
-  }, [id, navigate]);
+  }, [id]);
 
   if (!product)
     return (
@@ -68,10 +59,7 @@ export default function ProductDetails() {
     );
 
   const computedPrice = product.price + (sizePrices[selectedSize] || 0);
-
-  const isFavorite = (productId) => {
-    return favorites.some((f) => f.product_id === productId);
-  };
+  const isFavorite = (productId) => favorites.some((f) => f.product_id === productId);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -83,13 +71,8 @@ export default function ProductDetails() {
     const existing = favorites.find((f) => f.product_id === product.id);
 
     if (existing) {
-      const { error } = await supabase
-        .from("favorites")
-        .delete()
-        .eq("id", existing.id);
-
+      const { error } = await supabase.from("favorites").delete().eq("id", existing.id);
       if (error) return toast.error("Failed to remove favorite");
-
       setFavorites(favorites.filter((f) => f.id !== existing.id));
       toast(`${product.name} removed from favorites`);
     } else {
@@ -97,146 +80,152 @@ export default function ProductDetails() {
         .from("favorites")
         .insert([{ user_id: user.id, product_id: product.id }])
         .select();
-
       if (error) return toast.error("Failed to add favorite");
-
       setFavorites([...favorites, newFav[0]]);
       toast(`${product.name} added to favorites ❤️`);
     }
   };
 
   const handleAddToCart = async () => {
-    if (!user) {
-      navigate("/signup");
-      return;
+  try {
+    let userId = user?.id;
+
+    if (!userId) {
+      let guestId = localStorage.getItem("guest_id");
+      if (!guestId) {
+        guestId = crypto.randomUUID();
+        localStorage.setItem("guest_id", guestId);
+
+        const guestEmail = `guest_${guestId}@guest.com`;
+        const guestPassword = crypto.randomUUID();
+
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: guestEmail,
+          password: guestPassword,
+        });
+        if (signUpError) throw signUpError;
+
+        const { error: insertError } = await supabase.from("users").insert([
+          {
+            id: signUpData.user.id,
+            last_name: "Guest",
+            role: "guest",
+            email: guestEmail,
+          },
+        ]);
+        if (insertError) throw insertError;
+
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: guestEmail,
+          password: guestPassword,
+        });
+        if (loginError) throw loginError;
+
+        guestId = signUpData.user.id;
+      }
+
+      userId = guestId;
+      setUser({ id: guestId });
     }
 
-    const { data: existingCart, error: fetchError } = await supabase
+    const { data: menuData, error: menuError } = await supabase
+      .from("menu")
+      .select("product_id")
+      .eq("product_id", product.id)
+      .single();
+
+    if (menuError || !menuData) {
+      const { data: menuData, error: menuError } = await supabase
+   .from("menu")
+   .select("product_id")
+   .eq("product_id", product.id)
+   .single();
+
+if (menuError || !menuData) return toast.error("Product not available in menu");
+
+    }
+
+    const { data: existingCart } = await supabase
       .from("cart")
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", userId)
+      .eq("product_id", product.id)
+      .eq("size", selectedSize || "S")
+      .eq("flavor", selectedFlavor || "None")
+      .maybeSingle();
 
-    if (fetchError) return toast.error("Failed to fetch cart");
-
-    let cart = existingCart?.[0]?.items || [];
-
-    const existingIndex = cart.findIndex(
-      (item) =>
-        item.id === product.id &&
-        item.size === sizeMap[selectedSize] &&
-        item.flavor === selectedFlavor
-    );
-
-    if (existingIndex > -1) {
-      cart[existingIndex].quantity += quantity;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        quantity,
-        flavor: selectedFlavor,
-        size: sizeMap[selectedSize],
-        price: computedPrice,
-        image_url: product.image_url,
-      });
-    }
-
-    if (existingCart?.length > 0) {
-      const { error } = await supabase
+    if (existingCart) {
+      const { error: updateError } = await supabase
         .from("cart")
-        .update({ items: cart })
-        .eq("user_id", user.id);
-      if (error) return toast.error("Failed to update cart");
+        .update({ quantity: existingCart.quantity + quantity })
+        .eq("user_id", userId)
+        .eq("product_id", product.id)
+        .eq("size", selectedSize || "S")
+        .eq("flavor", selectedFlavor || "None");
+      if (updateError) throw updateError;
     } else {
-      const { error } = await supabase
-        .from("cart")
-        .insert({ user_id: user.id, items: cart });
-      if (error) return toast.error("Failed to add to cart");
+      const { error: insertError } = await supabase.from("cart").insert([
+        {
+          user_id: userId,
+          product_id: product.id,
+          quantity,
+          size: selectedSize || "S",
+          flavor: selectedFlavor || "None",
+        },
+      ]);
+      if (insertError) throw insertError;
     }
 
     toast.success(`${product.name} added to cart!`);
-  };
+    navigate("/menu", { state: { category: product.category } });
+  } catch (err) {
+    console.error("Cart insert error:", err);
+    toast.error("Failed to add to cart");
+  }
+};
 
   return (
     <section className="min-h-screen bg-[#C7AD7F]">
       <div className="relative w-full max-w-2xl mx-auto h-[43vh] sm:h-[65vh]">
-        <NavLink
-          to="/menu"
-          state={{ category: product.category }}
-          className="absolute left-4 sm:left-10 top-6 z-10"
-        >
+        <NavLink to="/menu" state={{ category: product.category }} className="absolute left-4 sm:left-10 top-6 z-10">
           <ChevronLeft size={50} className="text-black" />
         </NavLink>
-
-        <img
-          src={product.image_url}
-          alt={product.name}
-          className="w-full h-full object-cover object-top rounded-b-3xl cursor-pointer"
-        />
-
-        <button
-          onClick={toggleFavorite}
-          className="absolute right-4 sm:right-10 top-6 z-10"
-        >
-          <Heart
-            size={40}
-            className={`transition-colors ${
-              isFavorite(product.id) ? "fill-red-700 text-red-700" : "text-black"
-            }`}
-          />
+        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover object-top rounded-b-3xl cursor-pointer" />
+        <button onClick={toggleFavorite} className="absolute right-4 sm:right-10 top-6 z-10">
+          <Heart size={40} className={`transition-colors ${isFavorite(product.id) ? "fill-red-700 text-red-700" : "text-black"}`} />
         </button>
       </div>
 
-      {/* Product Details */}
       <div className="bg-white max-w-2xl mx-auto -mt-10 sm:-mt-16 rounded-t-3xl p-6 sm:p-10 relative z-10">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl sm:text-4xl font-semibold text-black">{product.name}</h1>
           <span className="text-3xl sm:text-3xl text-black">₱ {computedPrice}</span>
         </div>
 
-        <p className="text-black text-sm sm:text-base mt-3 leading-relaxed border-b pb-4">
-          {product.description}
-        </p>
+        <p className="text-black text-sm sm:text-base mt-3 leading-relaxed border-b pb-4">{product.description}</p>
 
-        {/* Flavors */}
         <h2 className="mt-3 pl-3 mb-3 text-2xl sm:text-xl text-black">Flavor</h2>
         <div className="flex gap-4 flex-wrap border-b pb-5 pl-8">
           {flavors.map((f) => (
             <button
               key={f}
               onClick={() => setSelectedFlavor(f)}
-              className={`px-6 py-1 rounded-full border-2 text-sm sm:text-base transition-colors ${
-                selectedFlavor === f
-                  ? "bg-black text-white"
-                  : "text-black border-black hover:bg-gray-100"
-              }`}
+              className={`px-6 py-1 rounded-full border-2 text-sm sm:text-base transition-colors ${selectedFlavor === f ? "bg-black text-white" : "text-black border-black hover:bg-gray-100"}`}
             >
               {f}
             </button>
           ))}
         </div>
 
-        {/* Quantity */}
         <div className="flex items-center justify-between mt-5 border-b pb-10">
           <h2 className="text-2xl sm:text-xl pl-3 text-black">Quantity</h2>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => quantity > 1 && setQuantity(quantity - 1)}
-              className="text-black text-2xl font-bold px-6 sm:px-5 py-1 transition"
-            >
-              -
-            </button>
+            <button onClick={() => quantity > 1 && setQuantity(quantity - 1)} className="text-black text-2xl font-bold px-6 sm:px-5 py-1 transition">-</button>
             <span className="text-lg sm:text-xl font-medium text-black">{quantity}</span>
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="text-black text-2xl font-bold px-6 sm:px-5 py-1 transition"
-            >
-              +
-            </button>
+            <button onClick={() => setQuantity(quantity + 1)} className="text-black text-2xl font-bold px-6 sm:px-5 py-1 transition">+</button>
           </div>
         </div>
 
-        {/* Size */}
         <div className="flex items-center justify-between mt-4 pb-10">
           <h2 className="text-2xl sm:text-xl pl-3 text-black">Size</h2>
           <div className="flex items-center gap-4 pr-13">
@@ -244,11 +233,7 @@ export default function ProductDetails() {
               <button
                 key={s}
                 onClick={() => setSelectedSize(s)}
-                className={`px-3 py-1 rounded-lg font-semibold border-2 text-2xl sm:text-base transition-colors ${
-                  selectedSize === s
-                    ? "bg-black text-white"
-                    : "text-black border-black hover:bg-gray-100"
-                }`}
+                className={`px-3 py-1 rounded-lg font-semibold border-2 text-2xl sm:text-base transition-colors ${selectedSize === s ? "bg-black text-white" : "text-black border-black hover:bg-gray-100"}`}
               >
                 {s}
               </button>
@@ -256,11 +241,7 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Add to Cart */}
-        <button
-          onClick={handleAddToCart}
-          className="w-full sm:w-80 bg-[#C0A16B] text-black py-2 mt-4 sm:mt-1 mb-10 text-3xl sm:text-xl font-semibold border-2 hover:opacity-90 transition block mx-auto"
-        >
+        <button onClick={handleAddToCart} className="w-full sm:w-80 bg-[#C0A16B] text-black py-2 mt-4 sm:mt-1 mb-10 text-3xl sm:text-xl font-semibold border-2 hover:opacity-90 transition block mx-auto">
           Add Cart
         </button>
       </div>

@@ -1,198 +1,279 @@
-import { ChevronLeft, Plus, Trash2 } from "lucide-react";
+import { Coffee, Trash2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router";
 import { supabase } from "../config/supabase";
 import toast from "react-hot-toast";
+import AdminNavbar from "./AdminNavbar";
 
 function AdminProduct({ showForm = true, showTable = false }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
     name: "",
     price: "",
+    stocks: "",
     category: "",
     image_url: "",
     description: "",
-    detail:"",
+    detail: "",
   });
   const [showMessage, setShowMessage] = useState("");
 
-  // Fetch products from Supabase
+ 
   useEffect(() => {
-    async function fetchProducts() {
-      const { data, error } = await supabase.from("products").select("*").order("id", { ascending: true });
+    async function fetchProductsFromMenu() {
+      const { data, error } = await supabase
+        .from("menu")
+        .select("product_id, products(*)")
+        .order("product_id", { ascending: true });
+
       if (error) {
         console.error(error);
+        toast.error("Failed to fetch menu products");
         return;
       }
-      setProducts(data);
+
+      const allProducts = data.map((item) => item.products);
+
+      setProducts(allProducts);
     }
-    fetchProducts();
+
+    fetchProductsFromMenu();
   }, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+
   const handleAddProduct = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!form.name || !form.price || !form.category) {
-    toast.error("Please fill in all required fields!");
-    return;
-  }
+    if (!form.name || !form.price || !form.stocks || !form.category) {
+      toast.error("Please fill in all required fields!");
+      return;
+    }
 
-  const { data, error } = await supabase
-    .from("products")
-    .insert([
-      {
-        name: form.name,
-        price: Number(form.price),
-        category: form.category,
-        image_url: form.image_url,
-        description: form.description,
-        detail: form.detail,
-      },
-    ])
-    .select();
+    const { data: productData, error: productError } = await supabase
+      .from("products")
+      .insert([
+        {
+          name: form.name,
+          price: Number(form.price),
+          stocks: Number(form.stocks),
+          category: form.category,
+          image_url: form.image_url,
+          description: form.description,
+          detail: form.detail,
+        },
+      ])
+      .select();
 
-  if (error) {
-    console.error(error);
-    toast.error("Failed to add product");
-    return;
-  }
+    if (productError) {
+      console.error(productError);
+      toast.error("Failed to add product");
+      return;
+    }
 
-  setProducts([...products, data[0]]);
-  setForm({ name: "", price: "", category: "", image_url: "", description: "", detail: "", });
-  setShowMessage("✅ Product added successfully!");
-  setTimeout(() => setShowMessage(""), 3000);
-};
+    const newProduct = productData[0];
+
+    const { error: menuError } = await supabase
+      .from("menu")
+      .insert([{ product_id: newProduct.id }]);
+
+    if (menuError) {
+      console.error(menuError);
+      toast.error("Failed to add product to menu");
+      return;
+    }
+
+    setProducts((prev) => [...prev, newProduct]);
+    setForm({
+      name: "",
+      price: "",
+      stocks: "",
+      category: "",
+      image_url: "",
+      description: "",
+      detail: "",
+    });
+
+    setShowMessage("✅ Product added successfully!");
+    setTimeout(() => setShowMessage(""), 3000);
+  };
 
 
   const handleDelete = async (id) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) {
-      console.error(error);
+  try {
+    console.log("Deleting menu for product:", id);
+
+    // Delete from menu
+    const { error: menuError } = await supabase
+      .from("menu")
+      .delete()
+      .eq("product_id", id);
+
+    if (menuError) {
+      console.error(menuError);
+      toast.error("Failed to remove product from menu");
+      return;
+    }
+
+    const { error: productError } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", id);
+
+    if (productError) {
+      console.error(productError);
       toast.error("Failed to delete product");
       return;
     }
-    setProducts(products.filter((p) => p.id !== id));
-  };
 
-  const buttonClass = `flex items-center gap-2 text-2xl px-5 py-2 font-semibold text-black mb-5 hover:text-amber-600 transition ${
-    location.pathname === "/portal" ? "border" : ""
-  }`;
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Deleted Successfully!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Unexpected error deleting product");
+  }
+};
+
 
   return (
-    <div className="w-full pb-10 bg-[#C7AD7F]">
-
-      {location.pathname !== "/portal" && (
-        <NavLink to="/portal" className="p-2 transition">
-          <ChevronLeft size={60} className="text-black" />
-        </NavLink>
-      )}
-
-      <h2 className="text-3xl font-semibold text-black pl-10 pb-3">Add Products</h2>
-
-      <div className="flex justify-center">
-        <button onClick={() => navigate("/add-product")} className={buttonClass}>
-          <Plus size={20} /> Add New Coffee
-        </button>
-      </div>
-
+    <div className="w-full min-h-screen bg-[#C7AD7F] p-4">
+      
       {showForm && (
-        <form onSubmit={handleAddProduct} className="p-6 mb-8 m-5 space-y-4 border backdrop-blur">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form
+          onSubmit={handleAddProduct}
+          className="max-w-4xl mx-auto p-4 text-xl space-y-4"
+        >
+          <h2 className="flex items-center gap-2 text-4xl text-black mb-5 font-semibold mt-4">
+            Add Products{" "}
+            <Coffee size={40} className="text-black fill-[#8B4411]" />
+          </h2>
+
+          {showMessage && (
+            <p className="text-center text-green-600 font-semibold mt-2">
+              {showMessage}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#E8E0E0] pl-3  pr-3 rounded-lg shadow-md border pt-8 pb-8">
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="Product Name"
-              className="w-full p-2 border-2 border-black rounded"
+              className="w-full p-3 border-2 border-black focus:ring-2 focus:ring-[#8B4411]"
             />
+
             <input
               name="price"
               value={form.price}
               onChange={handleChange}
               placeholder="Price"
               type="number"
-              className="w-full p-2 border-2 border-black rounded"
+              className="w-full p-3 border-2 border-black focus:ring-2 focus:ring-[#8B4411]"
             />
+
+            <input
+              name="stocks"
+              value={form.stocks}
+              onChange={handleChange}
+              placeholder="Stocks"
+              type="number"
+              className="w-full p-3 border-2 border-black focus:ring-2 focus:ring-[#8B4411]"
+            />
+
             <select
               name="category"
               value={form.category}
               onChange={handleChange}
-              className="w-full p-2 border-2 border-black rounded"
+              className="w-full p-3 border-2 border-black focus:ring-2 focus:ring-[#8B4411]"
             >
-              <option value="">Category</option>
+              <option value="">Select Category</option>
               <option value="Hot Coffee">Hot Coffee</option>
               <option value="Cold Coffee">Cold Coffee</option>
               <option value="Frappuccino">Frappuccino</option>
             </select>
+
             <input
               name="image_url"
               value={form.image_url}
               onChange={handleChange}
               placeholder="Image URL"
-              className="w-full p-2 border-2 border-black rounded"
+              className="w-full p-3 border-2 border-black focus:ring-2 focus:ring-[#8B4411] col-span-1 sm:col-span-2"
             />
+
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
               placeholder="Description"
-              className="w-full p-2 border-2 border-black rounded resize-none col-span-1 sm:col-span-2"
+              className="w-full p-3 border-2 border-black resize-none col-span-1 sm:col-span-2 focus:ring-2 focus:ring-[#8B4411]"
               rows={3}
             />
+
             <textarea
               name="detail"
               value={form.detail}
               onChange={handleChange}
               placeholder="Detail"
-              className="w-full p-2 border-2 border-black rounded resize-none col-span-1 sm:col-span-2"
+              className="w-full p-3 border-2 border-black resize-none col-span-1 sm:col-span-2 focus:ring-2 focus:ring-[#8B4411]"
               rows={2}
             />
+
+            <button
+              type="submit"
+              className="w-full py-1 mb-2 mt-4 bg-[#8B4411] border-2 text-black text-3xl font-bold rounded-lg hover:bg-[#A35B1C] transition col-span-1 sm:col-span-2"
+            >
+              Add Product
+            </button>
           </div>
-
-          <button className="bg-[#8B4411] mt-20 text-black text-2xl font-semibold w-full py-2 border-2 rounded transition">
-            Add Product
-          </button>
-
-          {showMessage && <p className="text-center text-green-600 mt-2">{showMessage}</p>}
         </form>
       )}
 
+  
       {showTable && (
-        <div className="max-h-[30vh] overflow-y-auto border-2 backdrop-blur">
-          <table className="min-w-full table-fixed">
-            <thead className="sticky top-0 bg-[#C7AD7F] z-10">
-              <tr>
-                <th className="px-4 py-2 border">Coffee Name</th>
-                <th className="px-4 py-2 border">Category</th>
-                <th className="px-5 py-2 border">Price</th>
-                <th className="px-4 py-2 border">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} className="transition">
-                  <td className="px-4 py-2 text-center border">{p.name}</td>
-                  <td className="px-4 py-2 text-center border">{p.category}</td>
-                  <td className="px-4 py-2 text-center border">₱ {p.price}</td>
-                  <td className="px-4 py-2 border text-center">
-                    <button onClick={() => handleDelete(p.id)} className="px-3 py-1 transition">
-                      <Trash2 />
-                    </button>
-                  </td>
+        <div className="w-full overflow-x-auto mt-8 rounded-xl">
+          <h2 className="text-2xl font-bold mb-5 ml-5">Manage Products</h2>
+          <div className="max-h-[70vh] overflow-y-auto border-2 rounded-lg shadow-lg">
+            <table className="min-w-full table-auto border-collapse">
+              <thead className=" text-lg text-black sticky top-0 z-10 bg-[#C7AD7F]">
+                <tr>
+                  <th className="px-5 py-2 border text-left">Coffee Name</th>
+                  <th className="px-2 py-2 border text-left">Category</th>
+                  <th className="px-2 py-2 border text-left">Price</th>
+                  <th className="px-2 py-2 border text-center">Stocks</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {products.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="bg-[#E8E0E0] text-base sm:text-lg transition"
+                  >
+                    <td className="px-2 py-2 border text-left break-words">
+                      {p.name}
+                    </td>
+                    <td className="px-2 py-2 border text-left">
+                      {p.category}
+                    </td>
+                    <td className="px-2 py-2 border text-left">
+                      ₱{p.price}
+                    </td>
+                    <td className="px-2 py-2 border text-center">
+                      {p.stocks}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
+      <AdminNavbar />
     </div>
   );
 }

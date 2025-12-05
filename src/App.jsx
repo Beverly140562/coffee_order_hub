@@ -13,6 +13,8 @@ import CartModal from "./pages/CartModal";
 import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProductOrder from "./pages/ProductOrder";
+import AdminHeader from "./pages/AdminHeader";
+import AdminEdit from "./pages/AdminEdit";
 
 function App() {
   return (
@@ -41,9 +43,11 @@ function App() {
 
 
           {/* Admin pages */}
-          <Route path="/portal" element={<AdminPage />} />
+          <Route path="/products" element={<AdminPage />} />
           <Route path="/add-product" element={<AdminProduct />} />
           <Route path="/orders" element={<AdminManage />} />
+          <Route path="/home" element={<AdminHeader/>} />
+          <Route path="/edit-product" element={<AdminEdit />} />
 
           <Route path="*" element={<Navigate to="/landing" />} />
         </Routes>

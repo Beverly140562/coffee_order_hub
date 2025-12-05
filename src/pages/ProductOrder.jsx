@@ -36,16 +36,18 @@ function ProductOrder() {
     fetchOrders();
   }, [navigate]);
 
-  if (loading) return <p className="min-h-screen bg-[#C7AD7F] flex flex-col items-center justify-center pt-20 text-black text-3xl">
-  <Loader2 className="w-10 h-10 animate-spin text-black mb-5" />
-
-  <span className="loading-dots">Loading</span>
-</p>;
+  if (loading)
+    return (
+      <p className="min-h-screen bg-[#C7AD7F] flex flex-col items-center justify-center pt-20 text-black text-3xl">
+        <Loader2 className="w-10 h-10 animate-spin text-black mb-5" />
+        <span className="loading-dots">Loading</span>
+      </p>
+    );
 
   return (
     <section className="min-h-screen bg-[#C7AD7F] px-4 sm:px-6 py-10">
       <div className="flex items-center mb-10">
-        <NavLink to="/profile" className="p-2 rounded-full hover:bg-gray-200 transition">
+        <NavLink to="/menu" className="p-2 rounded-full hover:bg-gray-200 transition">
           <ChevronLeft size={60} className="text-black" />
         </NavLink>
         <h1 className="ml-4 text-3xl sm:text-4xl font-bold text-black">Orders</h1>
@@ -59,14 +61,15 @@ function ProductOrder() {
           {orders.map((order) => {
             const orderDate = new Date(order.created_at);
             const formattedDate = orderDate.toLocaleDateString();
-            const formattedTime = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const formattedTime = orderDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-            const items = order.items || []; 
+            const items = order.items || [];
+            const ORNumber = `OR#${order.id.split("-")[0].toUpperCase()}`;
 
             return (
               <div key={order.id} className="border-b border-gray-300 pb-2 last:border-b-0">
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-black font-semibold">Payment: {order.payment}</p>
+                  <p className="text-black font-semibold">{ORNumber}</p>
                   <p className="text-black font-semibold">Status: {order.status}</p>
                 </div>
 

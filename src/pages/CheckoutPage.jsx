@@ -15,74 +15,81 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     async function fetchCart() {
-      // Get authenticated user
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData.user) {
-        navigate("/signup");
-        return;
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        let userId = authUser?.id;
+
+        if (!userId) {
+          const guestId = localStorage.getItem("guest_id");
+          if (!guestId) {
+            toast.error("Please login to continue checkout");
+            navigate("/signup");
+            return;
+          }
+          userId = guestId;
+        }
+        setUser({ id: userId });
+
+        const { data: cartData, error: cartError } = await supabase
+          .from("cart")
+          .select("*, product:products(*)") 
+          .eq("user_id", userId);
+
+        if (cartError) throw cartError;
+
+        const sizePrices = { S: 0, M: 20, L: 40 };
+        const itemsWithPrice = cartData.map((item) => ({
+          ...item,
+          price: item.product.price + (sizePrices[item.size] || 0),
+        }));
+
+        setCartItems(itemsWithPrice);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load cart");
       }
-      setUser(authData.user);
-
-      // Fetch user's cart from Supabase
-      const { data: cartData, error: cartError } = await supabase
-        .from("cart")
-        .select("items")
-        .eq("user_id", authData.user.id)
-        .single();
-
-      if (cartError) {
-        toast.error(`Failed to fetch cart: ${cartError.message}`);
-        return;
-      }
-
-      setCartItems(cartData?.items || []);
     }
 
     fetchCart();
   }, [navigate]);
 
-  const getTotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
-
-  const discount = (getTotal() * 0.05).toFixed(0);
-  const total = (getTotal() * 0.95).toFixed(0);
+  const getTotal = () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = (getTotal()).toFixed(0);
 
   const handleConfirm = async () => {
     if (!user) return;
 
-    const order = {
-      user_id: user.id,
-      items: cartItems,
-      pickup,
-      payment,
-      total: total,
-      status: "Pending",
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const order = {
+        user_id: user.id,
+        items: cartItems.map((item) => ({
+          product_id: item.product_id,
+          name: item.product.name,
+          size: item.size,
+          flavor: item.flavor,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        pickup,
+        payment,
+        total,
+        status: "Pending",
+        created_at: new Date().toISOString(),
+      };
 
-    // Insert order into Supabase
-    const { data, error } = await supabase.from("orders").insert([order]);
+      const { error: orderError } = await supabase.from("orders").insert([order]);
+      if (orderError) throw orderError;
 
-    if (error) {
-      console.error("Failed to save order:", error);
+      const { error: clearError } = await supabase.from("cart").delete().eq("user_id", user.id);
+      if (clearError) throw clearError;
+
+      setCartItems([]);
+      setShowPopup(true);
+      toast.success("Order confirmed!");
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to place order");
-      return;
     }
-
-    // Clear user's cart in Supabase
-    const { error: clearError } = await supabase
-      .from("cart")
-      .update({ items: [] })
-      .eq("user_id", user.id);
-
-    if (clearError) {
-      toast.error("Failed to clear cart");
-    }
-
-    setCartItems([]);
-    setShowPopup(true);
-    toast.success("Order confirmed!");
   };
 
   return (
@@ -91,56 +98,42 @@ export default function CheckoutPage() {
         <NavLink to="/cart">
           <ChevronLeft size={40} className="text-black" />
         </NavLink>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-black">
-          Check Out
-        </h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-black">Check Out</h1>
       </div>
 
-      <p className="text-lg text-center mb-4">
-        Please confirm and submit your order
-      </p>
+      <p className="text-lg text-center mb-4">Please confirm and submit your order</p>
 
-      {/* Pickup Section */}
       <div className="mb-4 bg-[#D9D9D9] p-2 rounded-xl">
-        <label className="block pl-5">Pickup At</label>
+        <label className="block pl-5">Pickup Location</label>
         <input
           type="text"
           value={pickupLocation}
           onChange={(e) => setPickupLocation(e.target.value)}
           className="w-full pl-10 border-b pb-2"
         />
-        <p className="block mb-1 pt-3 pl-5">Pickup</p>
+        <p className="block mb-1 pt-3 pl-5">Pickup Type</p>
         <label className="mr-4 pl-10">
-          <input
-            type="radio"
-            value="Take-Out"
-            checked={pickup === "Take-Out"}
-            onChange={(e) => setPickup(e.target.value)}
-            className="mr-1"
-          />
+          <input type="radio" value="Take-Out" checked={pickup === "Take-Out"} onChange={(e) => setPickup(e.target.value)} className="mr-1" />
           Take-Out
         </label>
         <label>
-          <input
-            type="radio"
-            value="Dine-In"
-            checked={pickup === "Dine-In"}
-            onChange={(e) => setPickup(e.target.value)}
-            className="mr-1"
-          />
+          <input type="radio" value="Dine-In" checked={pickup === "Dine-In"} onChange={(e) => setPickup(e.target.value)} className="mr-1" />
           Dine-In
         </label>
       </div>
 
-      {/* Order Summary */}
       <div className="bg-[#D9D9D9] p-4 rounded-xl mb-4">
         <h2 className="text-3xl mb-4">Order Summary</h2>
         <div className="max-h-50 overflow-y-scroll">
-          {cartItems.map((item, index) => (
-            <div key={index} className="mb-4">
+          {cartItems.map((item, i) => (
+            <div key={i} className="mb-4">
               <div className="flex justify-between">
-                <span className="font-semibold pl-4">{item.name}</span>
+                <span className="font-semibold pl-4">{item.product.name}</span>
                 <span className="pr-10">₱{item.price * item.quantity}</span>
+              </div>
+              <div className="flex justify-between pl-4 text-sm">
+                <span>Size: {item.size}</span>
+                <span className="pr-10">{item.price}</span>
               </div>
               {item.flavor && (
                 <div className="flex justify-between pl-4 text-sm">
@@ -148,14 +141,6 @@ export default function CheckoutPage() {
                   <span className="pr-10">{item.quantity}x {item.price}</span>
                 </div>
               )}
-              <div className="flex justify-between pl-4 text-sm">
-                <span>Size: {item.size}</span>
-                <span className="pr-10">{item.sizePrice}</span>
-              </div>
-              <div className="flex justify-between pl-4 text-sm">
-                <span>Qty: {item.quantity}</span>
-                <span className="pr-10">{item.quantity * item.price}</span>
-              </div>
             </div>
           ))}
         </div>
@@ -164,10 +149,6 @@ export default function CheckoutPage() {
           <span>Subtotal</span>
           <span className="pr-8">₱{getTotal()}</span>
         </div>
-        <div className="flex justify-between text-lg pl-3">
-          <span>Discount (5%)</span>
-          <span className="pr-8">-{discount}</span>
-        </div>
         <hr className="my-2 border-b" />
         <div className="flex justify-between text-2xl font-semibold p-2">
           <span>Total</span>
@@ -175,55 +156,32 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Payment Selection */}
       <div className="mb-4 pl-2 text-2xl pb-4">
-        <label className="block mb-1 pb-2">Payment Selection</label>
+        <label className="block mb-1 pb-2">Payment Method</label>
         <label className="mr-4 pl-20">
-          <input
-            type="radio"
-            value="Cash"
-            checked={payment === "Cash"}
-            onChange={(e) => setPayment(e.target.value)}
-            className="mr-4 w-6 h-6 accent-black"
-          />
+          <input type="radio" value="Cash" checked={payment === "Cash"} onChange={(e) => setPayment(e.target.value)} className="mr-4 w-6 h-6 accent-black" />
           Cash
         </label>
         <label>
-          <input
-            type="radio"
-            value="G-cash"
-            checked={payment === "G-cash"}
-            onChange={(e) => setPayment(e.target.value)}
-            className="mr-4 w-6 h-6 accent-black"
-          />
+          <input type="radio" value="G-cash" checked={payment === "G-cash"} onChange={(e) => setPayment(e.target.value)} className="mr-4 w-6 h-6 accent-black" />
           G-cash
         </label>
       </div>
 
-      <button
-        onClick={handleConfirm}
-        className="w-full bg-[#E7524E] text-black py-3 text-2xl font-semibold rounded"
-      >
+      <button onClick={handleConfirm} className="w-full bg-[#E7524E] text-black py-3 text-2xl font-semibold rounded">
         Confirm Order
       </button>
 
-      {/* Popup */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
           <div className="bg-white rounded-xl p-10 w-100 text-center relative">
-            <Check
-              className="text-center p-1 rounded-full bg-green-500 text-white"
-              size={40}
-            />
+            <Check className="text-center p-1 rounded-full bg-green-500 text-white" size={40} />
             <h2 className="text-xl mt-3 mb-10">Thank you for your order!</h2>
             <div className="flex justify-between items-center mb-10 text-black">
               <p>Payment Method</p>
               <p>{payment}</p>
             </div>
-            <button
-              onClick={() => navigate("/product-orders")}
-              className="bg-[#E7524E] text-black py-2 px-10 text-xl font-semibold rounded"
-            >
+            <button onClick={() => navigate("/product-orders")} className="bg-[#E7524E] text-black py-2 px-10 text-xl font-semibold rounded">
               Continue
             </button>
           </div>

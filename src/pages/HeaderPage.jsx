@@ -1,50 +1,58 @@
 import React, { useState, useEffect } from "react";
 import Logo from "../assets/logo.png";
-import { useNavigate } from "react-router";
 import { supabase } from "../config/supabase";
 
 export default function HeaderPage() {
-  const [userName, setUserName] = useState();
-  const navigate = useNavigate();
+  const [userName, setUserName] = useState("Guest");
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+  const fetchUserName = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
 
-      if (error || !user) {
-        navigate("/signup");
-        return;
-      }
+      if (data?.user) {
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("last_name")
+          .eq("id", data.user.id)
+          .maybeSingle(); 
 
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("first_name")
-        .eq("id", user.id)
-        .single();
+        if (error) {
+          console.error("Error fetching user data:", error.message);
+        }
 
-      if (userError || !userData) {
-        console.error("Failed to fetch user details:", userError?.message);
+        if (userData?.last_name) {
+          setUserName(userData.last_name);
+        }
+      } else {
         setUserName("Guest");
-        return;
       }
+    } catch (err) {
+      console.error("Error fetching user:", err);
+      setUserName("Guest");
+    }
+  };
 
-      setUserName(userData.first_name);
-    };
+  fetchUserName();
+}, []);
 
-    fetchUser();
-  }, [navigate]);
 
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center p-5">
       <div>
-        <h1 className="text-5xl font-bold text-black m-2 pt-10">
+        <h1 className="text-5xl font-bold text-black pt-10">
           Hi, {userName}
         </h1>
-        <p className="text-lg text-black mt-3 pl-5">
+        <p className="text-lg text-black mt-3">
           Good ideas start with coffee.
         </p>
       </div>
-      <img src={Logo} alt="Logo" className="w-33 h-33 object-cover" />
+
+      <img
+        src={Logo}
+        alt="Logo"
+        className="w-32 h-32 object-cover"
+      />
     </div>
   );
 }
