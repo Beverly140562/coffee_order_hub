@@ -63,6 +63,7 @@ export default function CheckoutPage() {
       const order = {
         user_id: user.id,
         items: cartItems.map((item) => ({
+          id: item.product.id,
           product_id: item.product_id,
           name: item.product.name,
           size: item.size,

@@ -49,7 +49,7 @@ export default function AdminManage() {
 
         const { data: productData, error: fetchError } = await supabase
           .from("products")
-          .select("id, stocks, name")
+          .select("id, stocks, name, stock_status")
           .eq("id", item.id)
           .single();
 
