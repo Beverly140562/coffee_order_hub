@@ -49,7 +49,7 @@ const getGreeting = () => {
   return (
     <div className="flex justify-between items-center p-5">
       <div>
-        <h1 className="text-2xl font-bold text-black pt-10">
+        <h1 className="text-2xl font-bold text-black pt-5">
           {getGreeting()}
         </h1>
         <p className="text-lg text-black mt-3">

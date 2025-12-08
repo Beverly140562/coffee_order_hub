@@ -120,15 +120,15 @@ export default function AdminManage() {
               orders.map((order) => (
                 <tr key={order.id} className="transition">
                   <td className="px-2 py-2 border">
-                    {order.userName} | OR#{String(order.id).slice(0, 5)} <br />
+                   OR#{String(order.id).slice(0, 8).toUpperCase()} <br />
                     {order.pickup} | {order.created_at.slice(0, 10)}
                   </td>
-                  <td className="px-4 py-2 border">
+                  <td className="px-2 py-2 border">
                     {order.items
                       .map((i) => `${i.name} (${i.size}, ${i.flavor}, x${i.quantity})`)
                       .join(", ")}
                   </td>
-                  <td className="px-4 py-2 border">₱{order.total}</td>
+                  <td className="px-2 py-2 border">₱{order.total}</td>
                   <td className="px-2 py-2 border">
                     <select
                       value={order.status}
